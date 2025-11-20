@@ -1,21 +1,18 @@
-import React, { useContext, useState } from 'react';
-import login from './login.png';
-import logotradethrill from '../../logotradethrill.svg';
-import './login.css';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import AuthContext from '../../context/AuthProvider';
-
-import bcrypt from 'bcryptjs';
+import axios from "axios";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../../context/AuthProvider";
+import logotradethrill from "../../logotradethrill.svg";
+import "./login.css";
+import login from "./login.png";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { authCreds, setAuthCreds, setIsLoggedIn } =
-    useContext(AuthContext);
+  const { setAuthCreds, setIsLoggedIn } = useContext(AuthContext);
 
   const [user, setUser] = useState({
     user_id: "",
-    hashed_password: "",
+    hashed_password: "", // This state variable name is kept to avoid breaking your form, but it holds the RAW password now.
   });
 
   const [error, setError] = useState({
@@ -33,57 +30,80 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Simple validation
+    if (!user.user_id) {
+      setError((prev) => ({ ...prev, rollnoEmpty: true }));
+      return;
+    }
+    if (!user.hashed_password) {
+      setError((prev) => ({ ...prev, passwordEmpty: true }));
+      return;
+    }
+
     loginAction();
   };
 
   const loginAction = async () => {
-    if (user.user_id && user.hashed_password) {
-      const real_hashed_password = await bcrypt.hash(user.hashed_password, 10);
-      const data = {
-        ...user,
-        "hashed_password": real_hashed_password 
-      }
-      console.log(data)
-      console.log(real_hashed_password)
-      axios
-        .get(`https://tradethrill.jitik.online:8000/login/${user.user_id}`)
-        .then(async (res) => {
-          if (res.data.message === "success" && bcrypt.compareSync(user.hashed_password, res.data.hashed_password)) {
-              setAuthCreds(prevAuthCreds => ({
-                ...prevAuthCreds,
-                user_id: res.data.user_id,
-                name: res.data.name,
-                email: res.data.email,
-                active: res.data.verified,
-                notification: res.data.notifications,
-                profile_pic: res.data.photo,
-                hashed_password: res.data.hashed_password
-              }));
-              setIsLoggedIn(true);
-              if (res.data.verified) {
-                navigate("/home");
-              } else {
-                navigate("/otp");
-              }
+    // We send the User ID and RAW Password to the backend
+    const loginData = {
+      user_id: user.user_id,
+      password: user.hashed_password,
+    };
+
+    axios
+      .post("http://127.0.0.1:8000/login", loginData)
+      .then((res) => {
+        // If we get here, the Server said "200 OK" -> Password is correct
+        if (res.data.message === "success") {
+          setAuthCreds((prevAuthCreds) => ({
+            ...prevAuthCreds,
+            user_id: res.data.user_id,
+            name: res.data.name,
+            email: res.data.email,
+            active: res.data.verified,
+            notification: res.data.notifications,
+            profile_pic: res.data.photo,
+            hashed_password: res.data.hashed_password, // Server might return hash for context, usually not needed on client but kept for compatibility
+          }));
+
+          setIsLoggedIn(true);
+
+          if (res.data.verified) {
+            navigate("/home");
           } else {
-            console.log(user.hashed_password);
-            console.log(res.data.hashed_password);
-            alert("Invalid Credentials");
+            navigate("/otp");
           }
-        })
-        .catch((error) => {
-          if (error.response && error.response.status === 403 && error.response.data.detail === "User access restricted due to reports"){
-            alert("You've been reported")
-          } else if(error.response && error.response.status === 403 && error.response.data.detail === "User is not verified"){
-            alert("Your account is not verified")
-          } else if(error.response && error.response.status === 404 && error.response.data.detail === "User not found"){
-            alert("You haven't registered")
+        }
+      })
+      .catch((error) => {
+        console.log("Login Error:", error);
+
+        if (error.response) {
+          const status = error.response.status;
+          const detail = error.response.data.detail;
+
+          if (status === 401) {
+            alert("Incorrect Password");
+          } else if (status === 404) {
+            alert("User not found. Please Register.");
+          } else if (status === 403) {
+            if (detail === "User access restricted due to reports") {
+              alert("You've been reported and banned.");
+            } else if (detail === "User is not verified") {
+              // Optional: Navigate to OTP if they exist but aren't verified
+              alert("Your account is not verified.");
+              // navigate("/otp", { state: { user_id: user.user_id } });
+            }
+          } else {
+            alert("Login Failed: " + detail);
           }
-          console.log("Error:", error);
-        });
-    }
+        } else {
+          alert("Server is not responding. Is the backend running?");
+        }
+      });
   };
-  
+
   return (
     <div className="login">
       <div className="backgroundimg">
@@ -102,7 +122,7 @@ const Login = () => {
           <div className="form-group">
             <p>Enter Roll Number:</p>
             <input
-              type="number" // Change to roll number type
+              type="number"
               name="user_id"
               value={user.user_id}
               onChange={handleChange}

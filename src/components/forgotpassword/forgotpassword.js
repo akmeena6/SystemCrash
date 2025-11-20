@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
-import forgotpasswordpage from './forgotpasswordpage.png';
+import axios from "axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logotradethrill from '../../logotradethrill.svg';
-import './forgotpassword.css';
-import axios from 'axios'; 
-import bcrypt from 'bcryptjs';
+import logotradethrill from "../../logotradethrill.svg";
+import "./forgotpassword.css";
+import forgotpasswordpage from "./forgotpasswordpage.png";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
 
   const [user, setUser] = useState({
     user_id: 0,
-    new_password: '',
-    confirm_password: '',
-    // otp: '',
+    new_password: "",
+    confirm_password: "",
+    otp: "", // Added OTP to initial state
   });
 
   const [error, setError] = useState({
@@ -41,59 +40,56 @@ const ForgotPassword = () => {
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
+
+    if (user.new_password !== user.confirm_password) {
+      setError((prevError) => ({
+        ...prevError,
+        passwordsMatch: false,
+      }));
+      return;
+    }
+
+    // Send RAW data to backend
+    const userData = {
+      user_id: user.user_id,
+      new_password: user.new_password,
+      confirm_password: user.confirm_password,
+    };
+
     try {
-
-      if (user.new_password !== user.confirm_password) {
-        setError((prevError) => ({
-          ...prevError,
-          passwordsMatch: false,
-        }));
-        return;
+      await axios.post("http://127.0.0.1:8000/forgotpassword", userData);
+      alert("OTP sent to your registered email.");
+      setStep(2);
+    } catch (error) {
+      console.error(error);
+      if (error.response) {
+        const msg = error.response.data.detail;
+        if (msg === "User not found") alert("User not registered.");
+        else if (msg === "User access restricted due to reports")
+          alert("You are banned.");
+        else if (msg === "User is not verified") alert("Account not verified.");
+        else alert("Error: " + msg);
       }
-
-      const hashedPassword = await bcrypt.hash(user.new_password, 10);
-
-      // Update the user object with the hashed password
-      // setUser((prevUser) => ({
-      //   ...prevUser,
-      //   new_password: hashedPassword,
-      // }));
-
-      const userData = {
-        user_id: user.user_id,
-        new_password: hashedPassword,
-      };
-
-      // const response = await axios.post('https://elan.iith-ac.in:8082/forgotpassword', user);
-      const response = await axios.post('https://tradethrill.jitik.online:8000/forgotpassword', userData);
-      // const response = await axios.post('http://127.0.0.1:8000/forgotpassword', user);
-      console.log(response.data); 
-      setStep(2); 
-    } 
-    catch (error) {
-      if(error.response && error.response.status === 404 && error.response.data.detail === "User not found"){
-        alert("You've not registered.")
-      } else if(error.response && error.response.status === 403 && error.response.data.detail === "User access restricted due to reports"){
-        alert("You've been reported")
-      } else if(error.response && error.response.status === 400 && error.response.data.detail === "User is not verified"){
-        alert("Your account is not verified")
-      }
-      console.error(error); // Handle error
     }
   };
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+
+    // Prepare data for the newotp endpoint
+    const otpData = {
+      user_id: user.user_id,
+      otp: parseInt(user.otp), // Ensure OTP is an integer
+    };
+
     try {
-      const response = await axios.post('https://tradethrill.jitik.online:8000/newotp', user);
-      // const response = await axios.post('http://127.0.0.1:8000/newotp', user);
-      console.log(response.data); 
-      alert("OTP verified");
+      await axios.post("http://127.0.0.1:8000/newotp", otpData);
+      alert("Password Reset Successful! Please Login.");
       navigate("/login");
     } catch (error) {
-      console.error(error); 
-      alert("Invalid OTP");
-      navigate("/forgotpassword");
+      console.error(error);
+      alert("Invalid OTP or Session Expired.");
+      // navigate("/forgotpassword"); // Optional: Stay on page to retry
     }
   };
 
@@ -116,12 +112,11 @@ const ForgotPassword = () => {
               <input
                 type="number"
                 name="user_id"
-                // value={user.user_id}
                 onChange={handleChange}
-                className={`form-control ${error.rollnoEmpty ? 'error' : ''}`}
+                className={`form-control ${error.rollnoEmpty ? "error" : ""}`}
                 placeholder="Enter Roll Number"
+                required
               />
-              {error.rollnoEmpty && <p className="error-message">Roll Number is required</p>}
             </div>
 
             <div className="form-group">
@@ -131,10 +126,12 @@ const ForgotPassword = () => {
                 name="new_password"
                 value={user.new_password}
                 onChange={handleChange}
-                className={`form-control ${error.newPasswordEmpty || !error.passwordsMatch ? 'error' : ''}`}
+                className={`form-control ${
+                  error.newPasswordEmpty ? "error" : ""
+                }`}
                 placeholder="Enter new password"
+                required
               />
-              {error.newPasswordEmpty && <p className="error-message">New Password is required</p>}
             </div>
 
             <div className="form-group">
@@ -144,15 +141,21 @@ const ForgotPassword = () => {
                 name="confirm_password"
                 value={user.confirm_password}
                 onChange={handleChange}
-                className={`form-control ${error.confirmPasswordEmpty || !error.passwordsMatch ? 'error' : ''}`}
+                className={`form-control ${
+                  !error.passwordsMatch ? "error" : ""
+                }`}
                 placeholder="Confirm new password"
+                required
               />
-              {error.confirmPasswordEmpty && <p className="error-message">Confirm Password is required</p>}
-              {!error.confirmPasswordEmpty && !error.passwordsMatch && <p className="error-message">Passwords don't match</p>}
+              {!error.passwordsMatch && (
+                <p className="error-message">Passwords don't match</p>
+              )}
             </div>
 
             <div className="button-container">
-              <button type="submit" className="submit">Send OTP</button>
+              <button type="submit" className="submit">
+                Send OTP
+              </button>
             </div>
           </form>
         )}
@@ -162,18 +165,20 @@ const ForgotPassword = () => {
             <div className="form-group">
               <p>Enter OTP:</p>
               <input
-                type="text"
+                type="number"
                 name="otp"
                 value={user.otp}
                 onChange={handleChange}
-                className={`form-control ${error.otpEmpty ? 'error' : ''}`}
+                className="form-control"
                 placeholder="Enter OTP"
+                required
               />
-              {error.otpEmpty && <p className="error-message">OTP is required</p>}
             </div>
 
             <div className="button-container">
-              <button type="submit" className="submit">Verify OTP</button>
+              <button type="submit" className="submit">
+                Verify & Reset
+              </button>
             </div>
           </form>
         )}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import './productview.css';
-import AuthContext from "../../context/AuthProvider";
 import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import AuthContext from "../../context/AuthProvider";
+import "./productview.css";
 
 const ProductViewPage = () => {
   const { product_id } = useParams(); // Get the product_id from the URL params
@@ -14,13 +14,13 @@ const ProductViewPage = () => {
   useEffect(() => {
     // Ensure user is authenticated
     if (authCreds.user_id === 0) {
-      navigate('/');
+      navigate("/");
     }
   }, [authCreds.user_id, navigate]);
 
   useEffect(() => {
     axios
-      .get(`https://tradethrill.jitik.online:8000/get_specific_product/${product_id}`)
+      .get(`http://127.0.0.1:8000/get_specific_product/${product_id}`)
       .then((res) => {
         setProduct(res.data);
       })
@@ -28,9 +28,9 @@ const ProductViewPage = () => {
         console.error("Error fetching product:", error);
       });
   }, [product_id]);
-  
+
   const [isWishlist, setIsWishlist] = useState(false);
-  const [reportButtonText, setReportButtonText] = useState('Report User');
+  const [reportButtonText, setReportButtonText] = useState("Report User");
   const [isReportDisabled, setIsReportDisabled] = useState(false);
   const [isAddedToWishlist, setIsAddedToWishlist] = useState(false); // New state
   const [isRequested, setIsRequested] = useState(false); // New state
@@ -49,7 +49,10 @@ const ProductViewPage = () => {
     if (authCreds.user_id !== 0 && product_id) {
       console.log(authCreds.user_id);
       console.log(product_id);
-      axios.get(`https://tradethrill.jitik.online:8000/request_count/${product_id}/${authCreds.user_id}`)
+      axios
+        .get(
+          `http://127.0.0.1:8000/request_count/${product_id}/${authCreds.user_id}`
+        )
         .then((res) => {
           setRequestCount(res.data.count);
         })
@@ -64,28 +67,38 @@ const ProductViewPage = () => {
   };
 
   const addToWishlist = () => {
-    let data  = {
+    let data = {
       product_id: parseInt(product_id),
       buyer_id: parseInt(authCreds.user_id),
-    }
-    axios.post("https://tradethrill.jitik.online:8000/wishlist", data)
+    };
+    axios
+      .post("http://127.0.0.1:8000/wishlist", data)
       .then((response) => {
         setIsAddedToWishlist(true); // Set to true after successfully adding to wishlist
-        navigate('/wishlist');
+        navigate("/wishlist");
       })
       .catch((error) => {
-        if(error.response && error.response.status === 400 && error.response.data.detail === "Product already exists"){
-          alert("You've already added this to wishlist")
+        if (
+          error.response &&
+          error.response.status === 400 &&
+          error.response.data.detail === "Product already exists"
+        ) {
+          alert("You've already added this to wishlist");
         }
-        if(error.response && error.response.status === 400 && error.response.data.detail === "You cannot add your own product to your wishlist"){
-          alert("You cannot add your own product to your wishlist")
+        if (
+          error.response &&
+          error.response.status === 400 &&
+          error.response.data.detail ===
+            "You cannot add your own product to your wishlist"
+        ) {
+          alert("You cannot add your own product to your wishlist");
         }
         console.log(error);
       });
   };
 
   const reportUser = () => {
-    setReportButtonText('Reported');
+    setReportButtonText("Reported");
     setIsReportDisabled(true);
   };
 
@@ -94,53 +107,71 @@ const ProductViewPage = () => {
   };
 
   const report = () => {
-    let data  = {
+    let data = {
       product_id: parseInt(product_id),
       reporter_id: parseInt(authCreds.user_id),
-    }
-    axios.post("https://tradethrill.jitik.online:8000/report", data)
+    };
+    axios
+      .post("http://127.0.0.1:8000/report", data)
       .then((response) => {
-        setReportButtonText('Reported'); // Update button text to "Reported"
+        setReportButtonText("Reported"); // Update button text to "Reported"
         setIsReportDisabled(true); // Disable the button
         console.log(response.data);
       })
       .catch((error) => {
-        if(error.response && error.response.status === 400 && error.response.data.detail === "Reporter and reported user cannot be the same"){
-          alert("You cannot report youself")
+        if (
+          error.response &&
+          error.response.status === 400 &&
+          error.response.data.detail ===
+            "Reporter and reported user cannot be the same"
+        ) {
+          alert("You cannot report youself");
         }
-        if(error.response && error.response.status === 400 && error.response.data.detail === "User has already been reported by this reporter"){
-          alert("You've already reported this user")
+        if (
+          error.response &&
+          error.response.status === 400 &&
+          error.response.data.detail ===
+            "User has already been reported by this reporter"
+        ) {
+          alert("You've already reported this user");
         }
         console.log(error);
       });
-  }
+  };
 
   const notif_request = () => {
     if (requestCount >= 3) {
       alert("You've already requested this product 3 times.");
       return;
     }
-    if (requestCount == 1 || requestCount == 2 ) {
-      const confirmRequest = window.confirm("You've already requested this product. Do you want to request again?");
+    if (requestCount == 1 || requestCount == 2) {
+      const confirmRequest = window.confirm(
+        "You've already requested this product. Do you want to request again?"
+      );
       if (!confirmRequest) return;
     }
-    let data  = {
+    let data = {
       pid: parseInt(product_id),
       buyer_id: parseInt(authCreds.user_id),
-    }
-    axios.post("https://tradethrill.jitik.online:8000/notify_request", data)
+    };
+    axios
+      .post("http://127.0.0.1:8000/notify_request", data)
       .then((response) => {
         setIsRequested(true); // Set to true after successfully sending request
-        setRequestCount(prevCount => prevCount + 1);
+        setRequestCount((prevCount) => prevCount + 1);
         console.log(response.data);
       })
       .catch((error) => {
-        if(error.response && error.response.status === 400 && error.response.data.detail === "You cannot request your own product"){
-          alert("You cannot request your own product")
+        if (
+          error.response &&
+          error.response.status === 400 &&
+          error.response.data.detail === "You cannot request your own product"
+        ) {
+          alert("You cannot request your own product");
         }
         console.log(error);
       });
-  }
+  };
 
   return (
     <div className="product-view-page">
@@ -150,7 +181,6 @@ const ProductViewPage = () => {
           alt={product.product_title}
           className="product-image"
         />
-        
       </div>
       <div className="seller-details">
         <h1>{product.title}</h1>

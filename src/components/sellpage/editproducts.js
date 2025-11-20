@@ -1,11 +1,11 @@
-import React, { useContext, useState, useEffect } from "react";
-import "./sellpage.css";
-import AuthContext from "../../context/AuthProvider";
 import axios from "axios";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AuthContext from "../../context/AuthProvider";
+import "./sellpage.css";
 
 const EditProducts = () => {
-  const { product_id } = useParams(); 
+  const { product_id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState({
     sell_price: 0,
@@ -13,7 +13,7 @@ const EditProducts = () => {
     title: "",
     usage: 0,
     description: "",
-    tags: ""
+    tags: "",
   });
   const { authCreds } = useContext(AuthContext);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -21,13 +21,13 @@ const EditProducts = () => {
 
   useEffect(() => {
     if (!authCreds.user_id) {
-      navigate('/');
+      navigate("/");
     }
   }, [authCreds.user_id, navigate]);
 
   useEffect(() => {
     axios
-      .get(`https://tradethrill.jitik.online:8000/get_specific_product/${product_id}`)
+      .get(`http://127.0.0.1:8000/get_specific_product/${product_id}`)
       .then((res) => {
         setData({
           sell_price: res.data.sell_price,
@@ -66,30 +66,40 @@ const EditProducts = () => {
     if (selectedPhoto) {
       const formData = new FormData();
       formData.append("file", selectedPhoto);
-      formData.append("data", JSON.stringify({...data, product_id: product_id}));
+      formData.append(
+        "data",
+        JSON.stringify({ ...data, product_id: product_id })
+      );
 
       try {
-        const response = await axios.post("https://tradethrill.jitik.online:8000/edit_products", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data", 
-          },
-        });
+        const response = await axios.post(
+          "http://127.0.0.1:8000/edit_products",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
         console.log(response.data);
         window.alert("Product details saved successfully!");
-        navigate('/uploadeditems');
+        navigate("/uploadeditems");
       } catch (error) {
         console.error(error);
       }
     } else {
       // No new photo selected, send only product details
       try {
-        const updatedData = {...data, product_id: product_id};
-        const response = await axios.post("https://tradethrill.jitik.online:8000/edit_product_details", updatedData);
-        
+        const updatedData = { ...data, product_id: product_id };
+        const response = await axios.post(
+          "http://127.0.0.1:8000/edit_product_details",
+          updatedData
+        );
+
         console.log(response.data);
         window.alert("Product details saved successfully!");
-        navigate('/uploadeditems');
+        navigate("/uploadeditems");
       } catch (error) {
         console.error(error);
       }
@@ -116,7 +126,11 @@ const EditProducts = () => {
                 {(selectedPhoto || existingPhoto) && (
                   <img
                     // src={URL.createObjectURL(selectedPhoto)}
-                    src={selectedPhoto ? URL.createObjectURL(selectedPhoto) : `data:image/png;base64,${existingPhoto}`}
+                    src={
+                      selectedPhoto
+                        ? URL.createObjectURL(selectedPhoto)
+                        : `data:image/png;base64,${existingPhoto}`
+                    }
                     alt="Uploaded"
                     style={{ maxWidth: "300px" }}
                   />

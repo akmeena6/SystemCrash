@@ -14,11 +14,10 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.7",
-    "bcryptjs": "^2.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -44,5 +43,31 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
+    "fork-ts-checker-webpack-plugin": {
+      "ajv": "^6.12.6",
+      "ajv-keywords": "^3.5.2"
+    },
+    "babel-loader": {
+      "schema-utils": {
+        "ajv": "^6.12.6",
+        "ajv-keywords": "^3.5.2"
+      }
+    },
+    "file-loader": {
+      "schema-utils": {
+        "ajv": "^6.12.6",
+        "ajv-keywords": "^3.5.2"
+      }
+    },
+    "url-loader": {
+      "schema-utils": {
+        "ajv": "^6.12.6",
+        "ajv-keywords": "^3.5.2"
+      }
+    }
   }
 }

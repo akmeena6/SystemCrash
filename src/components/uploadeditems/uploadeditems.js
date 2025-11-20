@@ -1,24 +1,24 @@
-import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; 
-import "./uploadeditems.css"; 
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthContext from "../../context/AuthProvider";
+import "./uploadeditems.css";
 
 const UploadedItems = () => {
   const [uploadedItems, setUploadedItems] = useState([]);
   const { authCreds } = useContext(AuthContext);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Ensure user is authenticated   
+    // Ensure user is authenticated
     if (authCreds.user_id === 0) {
-      navigate('/');
+      navigate("/");
     }
   }, [authCreds.user_id, navigate]);
 
   useEffect(() => {
     axios
-      .get(`https://tradethrill.jitik.online:8000/on_sale/${authCreds.user_id}`)
+      .get(`http://127.0.0.1:8000/on_sale/${authCreds.user_id}`)
       // .get(`http://127.0.0.1:8000/on_sale/${authCreds.user_id}`)
       .then((res) => {
         setUploadedItems(res.data);
@@ -31,13 +31,15 @@ const UploadedItems = () => {
   const handleEdit = (product_id) => {
     console.log("Navigating to edit page with itemId:", product_id);
     navigate(`/editproducts/${product_id}`);
-  }
+  };
 
   const handleRemove = async (product_id) => {
     try {
-      await axios.delete(`https://tradethrill.jitik.online:8000/remove_product/${product_id}`);
+      await axios.delete(`http://127.0.0.1:8000/remove_product/${product_id}`);
       // Refresh uploaded items after successful removal
-      const updatedItems = uploadedItems.filter(item => item.product_id !== product_id);
+      const updatedItems = uploadedItems.filter(
+        (item) => item.product_id !== product_id
+      );
       setUploadedItems(updatedItems);
     } catch (error) {
       console.error("Error removing product:", error);
@@ -57,8 +59,18 @@ const UploadedItems = () => {
             <p>Usage: {item.usage} months</p>
             <p>Number of people interested: {item.nf_interests}</p>
             <p>Tags: #{item.tags}</p>
-            <button className="edit" onClick={() => handleEdit(item.product_id)}>Edit</button>
-            <button className="remove" onClick={() => handleRemove(item.product_id)}>Remove Product</button>
+            <button
+              className="edit"
+              onClick={() => handleEdit(item.product_id)}
+            >
+              Edit
+            </button>
+            <button
+              className="remove"
+              onClick={() => handleRemove(item.product_id)}
+            >
+              Remove Product
+            </button>
           </div>
         ))}
       </div>

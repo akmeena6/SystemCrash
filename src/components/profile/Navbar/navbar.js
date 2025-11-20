@@ -1,9 +1,9 @@
-import React, { useContext, useState } from 'react';
-import './navbar.css';
-import { Link, useNavigate } from 'react-router-dom';
-import logotradethrill from '../../../logotradethrill.svg';
-import AuthContext from '../../../context/AuthProvider';
-import MenuIcon from '@mui/icons-material/Menu';
+import MenuIcon from "@mui/icons-material/Menu";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../../../context/AuthProvider";
+import logotradethrill from "../../../logotradethrill.svg";
+import "./navbar.css";
 
 export default function Navbar(props) {
   const navigate = useNavigate();
@@ -12,24 +12,25 @@ export default function Navbar(props) {
 
   const goToHome = () => {
     try {
-      navigate('/home');
+      navigate("/home");
     } catch (error) {
-      console.error('Error navigating to home:', error);
+      console.error("Error navigating to home:", error);
     }
   };
 
   const handleLogout = () => {
     setAuthCreds({
       user_id: 0,
-      name: '',
-      email: '',
+      name: "",
+      email: "",
       active: 0,
-      profile_pic: '',
+      profile_pic: "",
       notifications: [],
-      hashed_password: '',
+      hashed_password: "",
     });
     setIsLoggedIn(false);
-    navigate('/login');
+    setMenuOpen(false); // Close menu on logout
+    navigate("/login");
   };
 
   const toggleMenu = () => {
@@ -44,15 +45,27 @@ export default function Navbar(props) {
   return (
     <>
       <nav>
-        <input type="checkbox" id="check" checked={menuOpen} onChange={toggleMenu} />
+        <input
+          type="checkbox"
+          id="check"
+          checked={menuOpen}
+          onChange={toggleMenu}
+        />
         <label htmlFor="check" className="checkbtn">
           <MenuIcon className="menu-icon" />
         </label>
 
-        <img className="logopic" onClick={goToHome} src={logotradethrill} alt="TradeThrill" />
+        <img
+          className="logopic"
+          onClick={goToHome}
+          src={logotradethrill}
+          alt="TradeThrill"
+        />
 
-        <label className="logo" onClick={goToHome}>TradeThrill</label>
-        
+        <label className="logo" onClick={goToHome}>
+          TradeThrill
+        </label>
+
         <ul className={menuOpen ? "navbar-menu active" : "navbar-menu"}>
           <li>
             <Link className={props.vp} to="/profilepage">
@@ -68,7 +81,10 @@ export default function Navbar(props) {
             <Link to="/changepassword">Change Password</Link>
           </li>
           <li>
-            <Link to="#" onClick={handleLogout}>Logout</Link>
+            {/* Desktop Logout */}
+            <Link to="#" onClick={handleLogout}>
+              Logout
+            </Link>
           </li>
         </ul>
       </nav>
@@ -76,10 +92,17 @@ export default function Navbar(props) {
       {menuOpen && (
         <div className="dropdown-menu-navbar">
           <ul>
-            <li onClick={() => handleMenuItemClick("/profilepage")}>View Profile</li>
-            <li onClick={() => handleMenuItemClick("/transactions")}>Transactions</li>
-            <li onClick={() => handleMenuItemClick("/changepassword")}>Change Password</li>
-            <li onClick={() => handleMenuItemClick("/logout")}>Logout</li>
+            <li onClick={() => handleMenuItemClick("/profilepage")}>
+              View Profile
+            </li>
+            <li onClick={() => handleMenuItemClick("/transactions")}>
+              Transactions
+            </li>
+            <li onClick={() => handleMenuItemClick("/changepassword")}>
+              Change Password
+            </li>
+            {/* Fixed Mobile Logout: Calls function instead of navigating to non-existent route */}
+            <li onClick={handleLogout}>Logout</li>
           </ul>
         </div>
       )}

@@ -1,14 +1,14 @@
-import React, { useContext, useState, useEffect } from "react";
-import "./sellpage.css";
-import AuthContext from "../../context/AuthProvider";
 import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import AuthContext from "../../context/AuthProvider";
+import "./sellpage.css";
 
 import { useNavigate } from "react-router-dom";
 
 const SellPage = () => {
   const { authCreds, setAuthCreds } = useContext(AuthContext);
   const [pid, setPid] = useState(0);
-  const [selectedPhoto, setSelectedPhoto] = useState(null)
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
   const navigate = useNavigate();
   const [data, setData] = useState({
     seller_id: authCreds.user_id,
@@ -24,7 +24,7 @@ const SellPage = () => {
   useEffect(() => {
     // Ensure user is authenticated
     if (authCreds.user_id === 0) {
-      navigate('/');
+      navigate("/");
     }
   }, [authCreds.user_id, navigate]);
 
@@ -35,7 +35,7 @@ const SellPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const floatValue = parseFloat(value);
-  
+
     // Determine which input field triggered the change and update the corresponding error state
     switch (name) {
       case "sell_price":
@@ -51,8 +51,6 @@ const SellPage = () => {
         break;
     }
 
-    
-  
     // if (floatValue >= 0) {
     //   setData({
     //     ...data,
@@ -64,7 +62,6 @@ const SellPage = () => {
       [name]: value,
     });
   };
-  
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -83,35 +80,36 @@ const SellPage = () => {
       alert("Price and usage cannot be negative.");
       return; // Exit early, do not proceed with form submission
     }
-  
+
     const formData = new FormData();
     formData.append("file", selectedPhoto);
     formData.append("data", JSON.stringify(data));
-  
+
     try {
-      const response = await axios.post("https://tradethrill.jitik.online:8000/sellproduct", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-  
+      const response = await axios.post(
+        "http://127.0.0.1:8000/sellproduct",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
       console.log(response.data); // Logging response data for debugging purposes
-  
+
       // Display an alert message when product is uploaded successfully
       alert("Product uploaded successfully!");
       navigate("/home");
       // Reset form data or navigate to another page if needed
       // Example: setData({ ...initialData });
-  
     } catch (error) {
       console.error("Error uploading product:", error);
       // Display an alert message for error if needed
       // Example: alert("Error uploading product: " + error.message);
     }
   };
-  
-  
-  
+
   return (
     <div className="sellpage">
       <div className="sell-container">
@@ -154,7 +152,9 @@ const SellPage = () => {
             <div className="sell-section">
               <h2>CATEGORY</h2>
               <div className="category-selection">
-                <select name="tags" onChange={handleInputChange} required> {/* Make category required */}
+                <select name="tags" onChange={handleInputChange} required>
+                  {" "}
+                  {/* Make category required */}
                   <option value="">Select Category</option>
                   <option value="Electronics">Electronics</option>
                   <option value="Cycle">Cycle</option>
@@ -186,19 +186,23 @@ const SellPage = () => {
                 onChange={handleInputChange}
                 required // Make sell price required
               />
-              {sellPriceError && <p className="error-message">Enter a valid price</p>}
+              {sellPriceError && (
+                <p className="error-message">Enter a valid price</p>
+              )}
             </div>
 
             <div className="sell-section">
-             <h2>COST PRICE</h2>
+              <h2>COST PRICE</h2>
               <input
-               type="number"
-               name="cost_price"
-               placeholder="Enter the price"
-               onChange={handleInputChange}
-               required // Make cost price required
+                type="number"
+                name="cost_price"
+                placeholder="Enter the price"
+                onChange={handleInputChange}
+                required // Make cost price required
               />
-              {costPriceError && <p className="error-message">Enter a valid price</p>}
+              {costPriceError && (
+                <p className="error-message">Enter a valid price</p>
+              )}
             </div>
 
             <div className="sell-section">
@@ -210,7 +214,9 @@ const SellPage = () => {
                 onChange={handleInputChange}
                 required // Make usage required
               />
-              {usageError && <p className="error-message">Enter a valid usage</p>}
+              {usageError && (
+                <p className="error-message">Enter a valid usage</p>
+              )}
             </div>
 
             <div className="sell-section">

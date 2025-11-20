@@ -1,16 +1,28 @@
-import React, { useContext, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import AuthContext from "../../context/AuthProvider";
-import "./Otp.css"; // Import CSS file
+import "./Otp.css";
 
 const Otp = () => {
   const { authCreds, setAuthCreds } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation(); // Hook to get data passed from Register page
+
   const [packet, setPacket] = useState({
     user_id: "",
     otp: "",
   });
-  const navigate = useNavigate();
+
+  // Auto-fill User ID if passed from Register page
+  useEffect(() => {
+    if (location.state && location.state.user_id) {
+      setPacket((prev) => ({
+        ...prev,
+        user_id: location.state.user_id,
+      }));
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,25 +34,38 @@ const Otp = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Prepare data ensuring types match Backend Pydantic models
+    const submissionData = {
+      user_id: packet.user_id,
+      otp: parseInt(packet.otp), // Convert string "123456" to integer 123456
+    };
+
     axios
-      .post("https://tradethrill.jitik.online:8000/otp", packet)
-      // .post("http://127.0.0.1:8000/otp", packet)
+      .post("http://127.0.0.1:8000/otp", submissionData)
       .then((res) => {
         console.log(res.data);
         if (res.data.message === "success") {
+          // Update Context (Optional, since they usually need to login next anyway)
           setAuthCreds({
             ...authCreds,
             active: 1,
           });
-          alert("OTP verified");
+
+          alert("OTP Verified Successfully! Please Login.");
           navigate("/login");
         } else {
-          alert("Invalid OTP");
-          navigate("/register");
+          alert("Invalid OTP. Please try again.");
+          // Don't navigate away, let them retry
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
+        if (err.response && err.response.data) {
+          alert(err.response.data.detail || "Verification Failed");
+        } else {
+          alert("Server Error");
+        }
       });
   };
 
@@ -48,7 +73,7 @@ const Otp = () => {
     <div className="otp-container">
       <div className="otp-box">
         <h2>Enter OTP</h2>
-        <form onSubmit={(e) => handleSubmit(e)}>
+        <form onSubmit={handleSubmit}>
           <div className="input-field">
             <label htmlFor="user_id" className="label">
               Roll Number :
@@ -58,11 +83,9 @@ const Otp = () => {
               placeholder="Enter Roll Number"
               name="user_id"
               id="user_id"
-              onChange={(e) => handleChange(e)}
-              // type="number"
-              // name="user_id"
-              // value={packet.user_id}
-              // readOnly
+              value={packet.user_id} // Controlled input
+              onChange={handleChange}
+              required
             />
           </div>
           <div className="input-field">
@@ -70,11 +93,13 @@ const Otp = () => {
               OTP :
             </label>
             <input
-              type="text"
+              type="number" // Changed to number for better mobile keyboard
               placeholder="Enter OTP"
               name="otp"
               id="otp"
-              onChange={(e) => handleChange(e)}
+              value={packet.otp}
+              onChange={handleChange}
+              required
             />
           </div>
           <button type="submit" className="submit-btn">
