@@ -26,7 +26,7 @@ This project is made as part of our course project - CS253 - Software Developmen
 ### To run the project for the backend.
 Open your terminal. Make sure you activate your virtual environment if you've the setup. Then run the following command.
 ```
-   uvicorn app.main:app --reload
+   uvicorn main:app --reload
 ```
 
 
